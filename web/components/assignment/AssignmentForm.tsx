@@ -20,6 +20,15 @@ type Question = {
   marks: number
 }
 
+const QUESTION_TYPES = [
+  "Multiple Choice Questions",
+  "Short Questions",
+  "Long Questions",
+  "Diagram/Graph-Based Questions",
+  "Numerical Problems",
+  "True/False Questions"
+]
+
 export default function AssignmentForm() {
   const [file, setFile] =
     useState<File | null>(null)
@@ -75,6 +84,22 @@ export default function AssignmentForm() {
       prev.filter(q => q.id !== id)
     )
   }
+
+  const updateQuestionType = (
+  id: string,
+  value: string
+) => {
+  setQuestions(prev =>
+    prev.map(q => {
+      if (q.id !== id) return q
+
+      return {
+        ...q,
+        type: value
+      }
+    })
+  )
+}
 
   const updateCount = (
     id: string,
@@ -272,8 +297,15 @@ export default function AssignmentForm() {
               {/* Question Type */}
               <QuestionRow
                 title={question.type}
+                options={QUESTION_TYPES}
+                onChange={value =>
+                    updateQuestionType(
+                    question.id,
+                    value
+                    )
+                }
                 onRemove={() =>
-                  removeQuestion(question.id)
+                    removeQuestion(question.id)
                 }
               />
 
