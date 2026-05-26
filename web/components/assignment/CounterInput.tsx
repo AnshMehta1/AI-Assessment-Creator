@@ -4,10 +4,14 @@ import { Minus, Plus } from "lucide-react"
 
 type Props = {
   value: number
+  onIncrement: () => void
+  onDecrement: () => void
 }
 
 export default function CounterInput({
-  value
+  value,
+  onIncrement,
+  onDecrement
 }: Props) {
   return (
     <div
@@ -16,28 +20,40 @@ export default function CounterInput({
         h-[44px]
         bg-white
         rounded-full
+        border
+        border-[#EAEAEA]
         flex
         items-center
         justify-between
         px-3
       "
     >
-      <button>
-        <Minus
-          size={16}
-          className="text-gray-300"
-        />
+      <button
+        type="button"
+        onClick={onDecrement}
+        className="
+          text-[#CFCFCF]
+          hover:text-black
+          transition
+        "
+      >
+        <Minus size={16} />
       </button>
 
       <span className="text-[16px] font-medium">
         {value}
       </span>
 
-      <button>
-        <Plus
-          size={16}
-          className="text-gray-300"
-        />
+      <button
+        type="button"
+        onClick={onIncrement}
+        className="
+          text-[#CFCFCF]
+          hover:text-black
+          transition
+        "
+      >
+        <Plus size={16} />
       </button>
     </div>
   )

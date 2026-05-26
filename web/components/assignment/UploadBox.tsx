@@ -1,9 +1,41 @@
-import { UploadCloud } from "lucide-react"
+"use client"
 
-export default function UploadBox() {
+import { UploadCloud } from "lucide-react"
+import { useRef } from "react"
+
+type Props = {
+  file: File | null
+  setFile: (file: File | null) => void
+}
+
+export default function UploadBox({
+  file,
+  setFile
+}: Props) {
+  const inputRef =
+    useRef<HTMLInputElement>(null)
+
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const selectedFile =
+      e.target.files?.[0]
+
+    if (selectedFile) {
+      setFile(selectedFile)
+    }
+  }
+
   return (
     <div className="space-y-3">
       
+      <input
+        ref={inputRef}
+        type="file"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
       <div
         className="
           border-[1.75px]
@@ -20,19 +52,7 @@ export default function UploadBox() {
           gap-4
         "
       >
-        <div
-          className="
-            w-10
-            h-10
-            rounded-lg
-            bg-white
-            flex
-            items-center
-            justify-center
-          "
-        >
-          <UploadCloud size={24} />
-        </div>
+        <UploadCloud size={28} />
 
         <div>
           <p className="font-medium text-[16px]">
@@ -40,11 +60,15 @@ export default function UploadBox() {
           </p>
 
           <p className="text-sm text-gray-400 mt-1">
-            JPEG, PNG, upto 10MB
+            JPEG, PNG, PDF upto 10MB
           </p>
         </div>
 
         <button
+          type="button"
+          onClick={() =>
+            inputRef.current?.click()
+          }
           className="
             bg-[#F6F6F6]
             rounded-full
@@ -56,6 +80,12 @@ export default function UploadBox() {
         >
           Browse Files
         </button>
+
+        {file && (
+          <p className="text-sm text-black/70">
+            {file.name}
+          </p>
+        )}
       </div>
 
       <p className="text-center text-[16px] text-black/60">

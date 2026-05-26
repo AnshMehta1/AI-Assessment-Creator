@@ -1,3 +1,7 @@
+"use client"
+
+import { useState } from "react"
+
 import {
   Calendar,
   Plus,
@@ -9,7 +13,120 @@ import UploadBox from "./UploadBox"
 import QuestionRow from "./QuestionRow"
 import CounterInput from "./CounterInput"
 
+type Question = {
+  id: string
+  type: string
+  count: number
+  marks: number
+}
+
 export default function AssignmentForm() {
+  const [file, setFile] =
+    useState<File | null>(null)
+
+  const [questions, setQuestions] =
+    useState<Question[]>([
+      {
+        id: crypto.randomUUID(),
+        type: "Multiple Choice Questions",
+        count: 4,
+        marks: 1
+      },
+
+      {
+        id: crypto.randomUUID(),
+        type: "Short Questions",
+        count: 3,
+        marks: 2
+      },
+
+      {
+        id: crypto.randomUUID(),
+        type:
+          "Diagram/Graph-Based Questions",
+        count: 5,
+        marks: 5
+      },
+
+      {
+        id: crypto.randomUUID(),
+        type: "Numerical Problems",
+        count: 5,
+        marks: 5
+      }
+    ])
+
+  const addQuestionType = () => {
+    setQuestions(prev => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        type: "New Question Type",
+        count: 1,
+        marks: 1
+      }
+    ])
+  }
+
+  const removeQuestion = (
+    id: string
+  ) => {
+    setQuestions(prev =>
+      prev.filter(q => q.id !== id)
+    )
+  }
+
+  const updateCount = (
+    id: string,
+    direction: "increment" | "decrement"
+  ) => {
+    setQuestions(prev =>
+      prev.map(q => {
+        if (q.id !== id) return q
+
+        return {
+          ...q,
+          count:
+            direction === "increment"
+              ? q.count + 1
+              : Math.max(0, q.count - 1)
+        }
+      })
+    )
+  }
+
+  const updateMarks = (
+    id: string,
+    direction: "increment" | "decrement"
+  ) => {
+    setQuestions(prev =>
+      prev.map(q => {
+        if (q.id !== id) return q
+
+        return {
+          ...q,
+          marks:
+            direction === "increment"
+              ? q.marks + 1
+              : Math.max(0, q.marks - 1)
+        }
+      })
+    )
+  }
+
+  const totalQuestions =
+    questions.reduce(
+      (acc, q) => acc + q.count,
+      0
+    )
+
+  const totalMarks =
+    questions.reduce(
+      (acc, q) =>
+        acc + q.count * q.marks,
+      0
+    )
+
   return (
     <div className="max-w-[1103px] mx-auto flex flex-col gap-8">
       
@@ -47,8 +164,9 @@ export default function AssignmentForm() {
       {/* Main Card */}
       <div
         className="
-          bg-white/50
-          rounded-[32px]
+          glass-card
+          dashboard-card
+          soft-shadow
           p-8
           flex
           flex-col
@@ -68,117 +186,187 @@ export default function AssignmentForm() {
         </div>
 
         {/* Upload */}
-        <UploadBox />
+        <UploadBox
+          file={file}
+          setFile={setFile}
+        />
 
         {/* Due Date */}
         <div className="space-y-2">
-          
-          <label className="font-bold text-[16px]">
+        
+        <label className="font-bold text-[16px]">
             Due Date
-          </label>
+        </label>
 
-          <div
+        <div className="relative">
+            
+            <input
+            type="date"
             className="
-              h-[44px]
-              border
-              border-[#DADADA]
-              rounded-full
-              px-4
-              flex
-              items-center
-              justify-between
+                w-full
+                h-[44px]
+                border
+                border-[#DADADA]
+                rounded-full
+                px-4
+                pr-12
+                bg-white
+                outline-none
+                text-[14px]
+                text-[#303030]
             "
-          >
-            <span className="text-[#A9A9A9]">
-              DD-MM-YYYY
-            </span>
+            />
 
-            <Calendar size={20} />
-          </div>
+            <Calendar
+            size={18}
+            className="
+                absolute
+                right-4
+                top-1/2
+                -translate-y-1/2
+                text-black/60
+                pointer-events-none
+            "
+            />
+        </div>
         </div>
 
         {/* Questions */}
-        <div className="flex gap-16">
-          
-          <div className="flex-1 space-y-4">
-            
+        <div className="space-y-4">
+
+          {/* Header Row */}
+          <div
+            className="
+              grid
+              grid-cols-[1fr_120px_120px]
+              gap-6
+              items-center
+              px-2
+            "
+          >
             <h3 className="font-bold text-[16px]">
               Question Type
             </h3>
 
-            <QuestionRow
-              title="Multiple Choice Questions"
-              questions={4}
-              marks={1}
-            />
+            <h3 className="font-medium text-[16px] text-center">
+              No. of Questions
+            </h3>
 
-            <QuestionRow
-              title="Short Questions"
-              questions={3}
-              marks={2}
-            />
+            <h3 className="font-medium text-[16px] text-center">
+              Marks
+            </h3>
+          </div>
 
-            <QuestionRow
-              title="Diagram/Graph-Based Questions"
-              questions={5}
-              marks={5}
-            />
-
-            <QuestionRow
-              title="Numerical Problems"
-              questions={5}
-              marks={5}
-            />
-
-            <button className="flex items-center gap-2 mt-2">
+          {/* Dynamic Rows */}
+          {questions.map(question => (
+            <div
+              key={question.id}
+              className="
+                grid
+                grid-cols-[1fr_120px_120px]
+                gap-6
+                items-center
+              "
+            >
               
-              <div
-                className="
-                  w-9
-                  h-9
-                  rounded-full
-                  bg-[#2B2B2B]
-                  flex
-                  items-center
-                  justify-center
-                "
-              >
-                <Plus
-                  size={18}
-                  className="text-white"
+              {/* Question Type */}
+              <QuestionRow
+                title={question.type}
+                onRemove={() =>
+                  removeQuestion(question.id)
+                }
+              />
+
+              {/* Count */}
+              <div className="flex justify-center">
+                <CounterInput
+                  value={question.count}
+                  onIncrement={() =>
+                    updateCount(
+                      question.id,
+                      "increment"
+                    )
+                  }
+                  onDecrement={() =>
+                    updateCount(
+                      question.id,
+                      "decrement"
+                    )
+                  }
                 />
               </div>
 
-              <span className="font-bold text-sm">
-                Add Question Type
-              </span>
-            </button>
-          </div>
+              {/* Marks */}
+              <div className="flex justify-center">
+                <CounterInput
+                  value={question.marks}
+                  onIncrement={() =>
+                    updateMarks(
+                      question.id,
+                      "increment"
+                    )
+                  }
+                  onDecrement={() =>
+                    updateMarks(
+                      question.id,
+                      "decrement"
+                    )
+                  }
+                />
+              </div>
+            </div>
+          ))}
 
-          {/* Right Stats */}
-          <div className="flex gap-4 pt-10">
+          {/* Add Question */}
+          <button
+            type="button"
+            onClick={addQuestionType}
+            className="
+              flex
+              items-center
+              gap-2
+              mt-2
+            "
+          >
             
-            <div className="space-y-4">
-              <h4 className="font-medium">
-                No. of Questions
-              </h4>
-
-              <CounterInput value={4} />
-              <CounterInput value={3} />
-              <CounterInput value={5} />
-              <CounterInput value={5} />
+            <div
+              className="
+                w-9
+                h-9
+                rounded-full
+                bg-[#2B2B2B]
+                flex
+                items-center
+                justify-center
+              "
+            >
+              <Plus
+                size={18}
+                className="text-white"
+              />
             </div>
 
-            <div className="space-y-4">
-              <h4 className="font-medium">
-                Marks
-              </h4>
+            <span className="font-bold text-sm">
+              Add Question Type
+            </span>
+          </button>
+        </div>
 
-              <CounterInput value={1} />
-              <CounterInput value={2} />
-              <CounterInput value={5} />
-              <CounterInput value={5} />
-            </div>
+        {/* Totals */}
+        <div className="flex justify-end">
+          
+          <div className="text-right space-y-1">
+            <p className="text-sm">
+              Total Questions:
+              {" "}
+              {totalQuestions}
+            </p>
+
+            <p className="text-sm">
+              Total Marks:
+              {" "}
+              {totalMarks}
+            </p>
           </div>
         </div>
 
@@ -189,8 +377,9 @@ export default function AssignmentForm() {
             Additional Information (For better output)
           </label>
 
-          <div
+          <textarea
             className="
+              w-full
               h-[102px]
               border
               border-dashed
@@ -198,12 +387,11 @@ export default function AssignmentForm() {
               rounded-2xl
               p-4
               bg-white/25
+              resize-none
+              outline-none
             "
-          >
-            <p className="text-sm text-black/50">
-              e.g Generate a question paper for 3 hour exam duration...
-            </p>
-          </div>
+            placeholder="e.g Generate a question paper for 3 hour exam duration..."
+          />
         </div>
 
         {/* Footer */}
