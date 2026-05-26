@@ -90,7 +90,6 @@ button {
   cursor: pointer;
   border: none;
   outline: none;
-  background: none;
 
   transition:
     opacity 0.2s ease,
