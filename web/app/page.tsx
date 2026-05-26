@@ -1,9 +1,9 @@
+import AssignmentForm from "@/components/assignment/AssignmentForm"
+
 export default function Home() {
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <h1 className="text-4xl font-bold">
-        VedaAI Assessment Creator
-      </h1>
+    <main className="min-h-screen bg-[#F5F5F5] px-6 py-10">
+      <AssignmentForm />
     </main>
   )
 }
