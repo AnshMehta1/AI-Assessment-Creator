@@ -627,6 +627,49 @@ export default function AssignmentsPage() {
             </div>
           )}
       </div>
+
+      {/* Floating Create Assignment Button */}
+      {!loading && !isEmpty && (
+        <button
+          onClick={() =>
+            window.location.href = "/"
+          }
+
+          className="
+            fixed
+            bottom-8
+            left-1/2
+            z-50
+            flex
+            h-[52px]
+            -translate-x-1/2
+            items-center
+            gap-2
+            rounded-full
+            bg-[#181818]
+            px-8
+            text-white
+            shadow-[0px_10px_40px_rgba(0,0,0,0.18)]
+            transition-all
+            duration-200
+            hover:scale-[1.02]
+            hover:shadow-[0px_14px_48px_rgba(0,0,0,0.22)]
+          "
+        >
+          
+          <Plus size={18} />
+
+          <span
+            className="
+              text-[16px]
+              font-medium
+              tracking-[-0.04em]
+            "
+          >
+            Create Assignment
+          </span>
+        </button>
+      )}
     </main>
   )
 }

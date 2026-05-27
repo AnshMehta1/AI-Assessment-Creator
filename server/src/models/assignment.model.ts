@@ -10,13 +10,23 @@ const questionSchema =
 const assignmentSchema =
   new mongoose.Schema(
     {
-      title: String,
-
-      dueDate: String,
-
-      assignedOn: String,
-
-      questions: [questionSchema],
+      title: {
+        type: String,
+        required: true,
+      },
+      dueDate: {
+        type: String,
+        required: true,
+      },
+      instructions: {
+        type: String,
+      },
+      assignedOn: {
+        type: String,
+      },
+      questions: [
+        questionSchema
+      ],
     },
     {
       timestamps: true,

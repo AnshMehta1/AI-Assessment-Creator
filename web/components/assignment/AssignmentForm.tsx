@@ -5,6 +5,8 @@ import UploadBox from "./UploadBox"
 import QuestionRow from "./QuestionRow"
 import CounterInput from "./CounterInput"
 import { useCreateAssignmentStore } from "@/store/create-assignment.store"
+import { useRouter } from "next/navigation"
+import { api } from "@/lib/api"
 
 const QUESTION_TYPES = [
   "Multiple Choice Questions",
@@ -33,6 +35,8 @@ export default function AssignmentForm() {
     questions,
     setQuestions,
   } = useCreateAssignmentStore()
+
+  const router = useRouter()
 
   const addQuestionType = () => {
     setQuestions([
@@ -90,9 +94,9 @@ export default function AssignmentForm() {
             direction === "increment"
               ? q.count + 1
               : Math.max(
-                  0,
-                  q.count - 1
-                )
+                0,
+                q.count - 1
+              )
         }
       })
     )
@@ -115,13 +119,42 @@ export default function AssignmentForm() {
             direction === "increment"
               ? q.marks + 1
               : Math.max(
-                  0,
-                  q.marks - 1
-                )
+                0,
+                q.marks - 1
+              )
         }
       })
     )
   }
+
+  const createAssignment =
+    async () => {
+      if (!title.trim()) {
+        alert("Please enter assignment title")
+        return
+      }
+
+      if (!dueDate) {
+        alert("Please select due date")
+        return
+      }
+
+      try {
+        await api.post(
+          "/assignments",
+          {
+            title,
+            dueDate,
+            instructions,
+            questions,
+          }
+        )
+
+        router.push("/assignments")
+      } catch (error) {
+        console.error("Failed to create assignment", error)
+      }
+    }
 
   const totalQuestions =
     questions.reduce(
@@ -138,10 +171,10 @@ export default function AssignmentForm() {
 
   return (
     <div className="max-w-[1103px] mx-auto flex flex-col gap-8">
-      
+
       {/* Header */}
       <div className="flex items-center gap-3">
-        
+
         <div
           className="
             w-3
@@ -182,7 +215,7 @@ export default function AssignmentForm() {
           gap-8
         "
       >
-        
+
         {/* Section Header */}
         <div>
           <h2 className="text-[20px] font-bold tracking-[-0.04em]">
@@ -230,13 +263,13 @@ export default function AssignmentForm() {
 
         {/* Due Date */}
         <div className="space-y-2">
-        
+
           <label className="font-bold text-[16px]">
             Due Date
           </label>
 
           <div className="relative">
-              
+
             <input
               type="date"
 
@@ -314,7 +347,7 @@ export default function AssignmentForm() {
                 items-center
               "
             >
-              
+
               {/* Question Type */}
               <QuestionRow
                 title={question.type}
@@ -392,7 +425,7 @@ export default function AssignmentForm() {
               mt-2
             "
           >
-            
+
             <div
               className="
                 w-9
@@ -418,7 +451,7 @@ export default function AssignmentForm() {
 
         {/* Totals */}
         <div className="flex justify-end">
-          
+
           <div className="text-right space-y-1">
 
             <p className="text-sm">
@@ -438,7 +471,7 @@ export default function AssignmentForm() {
 
         {/* Additional Info */}
         <div className="space-y-2">
-          
+
           <label className="font-bold text-[16px]">
             Additional Information (For better output)
           </label>
@@ -474,7 +507,7 @@ export default function AssignmentForm() {
 
         {/* Footer */}
         <div className="flex items-center justify-between">
-          
+
           <button
             className="
               h-[46px]
@@ -491,6 +524,10 @@ export default function AssignmentForm() {
           </button>
 
           <button
+            onClick={
+              createAssignment
+            }
+
             className="
               h-[46px]
               px-6
