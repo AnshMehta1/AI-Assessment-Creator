@@ -1,5 +1,31 @@
 import mongoose from "mongoose"
 
+const generatedQuestionSchema =
+  new mongoose.Schema({
+    question: {
+      type: String,
+    },
+    difficulty: {
+      type: String,
+    },
+    marks: {
+      type: Number,
+    },
+  })
+
+const generatedSectionSchema =
+  new mongoose.Schema({
+    title: {
+      type: String,
+    },
+    instruction: {
+      type: String,
+    },
+    questions: [
+      generatedQuestionSchema
+    ],
+  })
+
 const questionSchema =
   new mongoose.Schema({
     type: String,
@@ -29,6 +55,26 @@ const assignmentSchema =
       },
       questions: [
         questionSchema
+      ],
+      status: {
+        type: String,
+        enum: [
+          "pending",
+          "processing",
+          "completed",
+          "failed",
+        ],
+        default: "pending",
+      },
+      generatedPaper: {
+        sections: [
+          generatedSectionSchema
+        ],
+      },
+      generationLogs: [
+        {
+          type: String,
+        }
       ],
     },
     {

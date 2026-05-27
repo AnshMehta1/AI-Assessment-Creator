@@ -174,20 +174,23 @@ export default function AssignmentForm() {
           )
         }
 
-        await api.post(
-          "/assignments",
+        const res =
+          await api.post(
+            "/assignments",
 
-          formData,
+            formData,
 
-          {
-            headers: {
-              "Content-Type":
-                "multipart/form-data",
-            },
-          }
+            {
+              headers: {
+                "Content-Type":
+                  "multipart/form-data",
+              },
+            }
+          )
+
+        router.push(
+          `/generate?id=${res.data.assignment._id}`
         )
-
-        router.push("/")
       } catch (error) {
         console.error("Failed to create assignment", error)
       }

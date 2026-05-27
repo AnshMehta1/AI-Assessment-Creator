@@ -2,17 +2,35 @@ import express from "express"
 
 import Assignment from "../models/assignment.model"
 import { upload } from "../middleware/upload"
+import { assignmentQueue } from "../queues/assignment.queue"
 
 const router = express.Router()
 
-router.get("/", async (_, res) => {
-  const assignments =
-    await Assignment.find().sort({
-      createdAt: -1,
-    })
+router.get(
+  "/",
 
-  res.json(assignments)
-})
+  async (_, res) => {
+    try {
+
+      const assignments =
+        await Assignment.find()
+          .sort({
+            createdAt: -1,
+          })
+
+      res.json(assignments)
+
+    } catch (error) {
+
+      console.error(error)
+
+      res.status(500).json({
+        message:
+          "Failed to fetch assignments",
+      })
+    }
+  }
+)
 
 router.post(
   "/",
@@ -20,6 +38,7 @@ router.post(
   upload.single("file"),
 
   async (req, res) => {
+
     try {
 
       const questions =
@@ -49,11 +68,29 @@ router.post(
             new Date().toLocaleDateString(
               "en-GB"
             ),
+
+          status:
+            "pending",
+
+          generationLogs: [
+            "Assignment created",
+          ],
         })
 
-      res.status(201).json(
-        assignment
+      await assignmentQueue.add(
+        "generate-paper",
+
+        {
+          assignmentId:
+            assignment._id,
+        }
       )
+
+      res.status(201).json({
+        success: true,
+
+        assignment,
+      })
 
     } catch (error) {
 
@@ -67,17 +104,65 @@ router.post(
   }
 )
 
+router.get(
+  "/:id",
+
+  async (req, res) => {
+
+    try {
+
+      const assignment =
+        await Assignment.findById(
+          req.params.id
+        )
+
+      if (!assignment) {
+        return res
+          .status(404)
+          .json({
+            message:
+              "Assignment not found",
+          })
+      }
+
+      res.json(assignment)
+
+    } catch (error) {
+
+      console.error(error)
+
+      res.status(500).json({
+        message:
+          "Failed to fetch assignment",
+      })
+    }
+  }
+)
+
 router.delete(
   "/:id",
 
   async (req, res) => {
-    await Assignment.findByIdAndDelete(
-      req.params.id
-    )
 
-    res.json({
-      success: true
-    })
+    try {
+
+      await Assignment.findByIdAndDelete(
+        req.params.id
+      )
+
+      res.json({
+        success: true,
+      })
+
+    } catch (error) {
+
+      console.error(error)
+
+      res.status(500).json({
+        message:
+          "Failed to delete assignment",
+      })
+    }
   }
 )
 
