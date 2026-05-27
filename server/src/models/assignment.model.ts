@@ -24,6 +24,9 @@ const assignmentSchema =
       assignedOn: {
         type: String,
       },
+      fileUrl: {
+        type: String,
+      },
       questions: [
         questionSchema
       ],

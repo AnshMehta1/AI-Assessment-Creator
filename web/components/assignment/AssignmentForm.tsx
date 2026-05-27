@@ -140,13 +140,50 @@ export default function AssignmentForm() {
       }
 
       try {
+        
+        const formData =
+          new FormData()
+
+        formData.append(
+          "title",
+          title
+        )
+
+        formData.append(
+          "dueDate",
+          dueDate
+        )
+
+        formData.append(
+          "instructions",
+          instructions
+        )
+
+        formData.append(
+          "questions",
+
+          JSON.stringify(
+            questions
+          )
+        )
+
+        if (file) {
+          formData.append(
+            "file",
+            file
+          )
+        }
+
         await api.post(
           "/assignments",
+
+          formData,
+
           {
-            title,
-            dueDate,
-            instructions,
-            questions,
+            headers: {
+              "Content-Type":
+                "multipart/form-data",
+            },
           }
         )
 
