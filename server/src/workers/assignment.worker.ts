@@ -1,6 +1,7 @@
 import { Worker } from "bullmq"
 
 import Assignment from "../models/assignment.model"
+import { generateAssessment } from "../services/ai.service"
 
 new Worker(
   "assignment-generation",
@@ -16,123 +17,125 @@ new Worker(
       assignmentId
     } = job.data
 
-    await Assignment.findByIdAndUpdate(
-      assignmentId,
+    try {
 
-      {
-        status:
-          "processing",
-
-        generationLogs: [
-          "Assignment created",
-          "Processing uploaded files...",
-        ],
-      }
-    )
-
-    await delay(2000)
-
-    await Assignment.findByIdAndUpdate(
-      assignmentId,
-
-      {
-        generationLogs: [
-          "Assignment created",
-          "Processing uploaded files...",
-          "Generating AI questions...",
-        ],
-      }
-    )
-
-    await delay(3000)
-
-    const generatedPaper = {
-      sections: [
-        {
-          title:
-            "Section A",
-
-          instruction:
-            "Attempt all questions",
-
-          questions: [
-            {
-              question:
-                "Explain TCP congestion control.",
-
-              difficulty:
-                "Medium",
-
-              marks: 5,
-            },
-
-            {
-              question:
-                "What is Sliding Window Protocol?",
-
-              difficulty:
-                "Easy",
-
-              marks: 3,
-            },
-          ],
-        },
+      await Assignment.findByIdAndUpdate(
+        assignmentId,
 
         {
-          title:
-            "Section B",
+          status:
+            "processing",
 
-          instruction:
-            "Attempt any two questions",
-
-          questions: [
-            {
-              question:
-                "Compare TCP and UDP.",
-
-              difficulty:
-                "Medium",
-
-              marks: 5,
-            },
-
-            {
-              question:
-                "Explain the OSI model.",
-
-              difficulty:
-                "Hard",
-
-              marks: 8,
-            },
+          generationLogs: [
+            "Assignment created",
+            "Processing uploaded files...",
           ],
-        },
-      ],
+        }
+      )
+
+      await delay(2000)
+
+      await Assignment.findByIdAndUpdate(
+        assignmentId,
+
+        {
+          generationLogs: [
+            "Assignment created",
+            "Processing uploaded files...",
+            "Generating AI questions...",
+          ],
+        }
+      )
+
+      const assignment =
+        await Assignment.findById(
+          assignmentId
+        )
+
+      if (!assignment) {
+        throw new Error(
+          "Assignment not found"
+        )
+      }
+
+      const generatedPaper =
+        await generateAssessment({
+          title:
+            assignment.title,
+
+          instructions:
+            assignment.instructions || undefined,
+
+          questions:
+            JSON.parse(
+              JSON.stringify(
+                assignment.questions
+              )
+            ),
+        })
+
+      await delay(1500)
+
+      await Assignment.findByIdAndUpdate(
+        assignmentId,
+
+        {
+          generationLogs: [
+            "Assignment created",
+            "Processing uploaded files...",
+            "Generating AI questions...",
+            "Formatting assessment...",
+          ],
+        }
+      )
+
+      await delay(1000)
+
+      await Assignment.findByIdAndUpdate(
+        assignmentId,
+
+        {
+          generatedPaper,
+
+          status:
+            "completed",
+
+          generationLogs: [
+            "Assignment created",
+            "Processing uploaded files...",
+            "Generating AI questions...",
+            "Formatting assessment...",
+            "Generation completed!",
+          ],
+        }
+      )
+
+      console.log(
+        "Assignment generation completed:",
+        assignmentId
+      )
+
+    } catch (error) {
+
+      console.error(
+        "AI Generation Failed:",
+        error
+      )
+
+      await Assignment.findByIdAndUpdate(
+        assignmentId,
+
+        {
+          status:
+            "failed",
+
+          generationLogs: [
+            "Assignment created",
+            "Generation failed",
+          ],
+        }
+      )
     }
-
-    await Assignment.findByIdAndUpdate(
-      assignmentId,
-
-      {
-        generatedPaper,
-
-        status:
-          "completed",
-
-        generationLogs: [
-          "Assignment created",
-          "Processing uploaded files...",
-          "Generating AI questions...",
-          "Formatting assessment...",
-          "Generation completed!",
-        ],
-      }
-    )
-
-    console.log(
-      "Assignment generation completed:",
-      assignmentId
-    )
   },
 
   {
