@@ -140,7 +140,7 @@ export default function AssignmentForm() {
       }
 
       try {
-        
+
         const formData =
           new FormData()
 
@@ -187,7 +187,7 @@ export default function AssignmentForm() {
           }
         )
 
-        router.push("/assignments")
+        router.push("/")
       } catch (error) {
         console.error("Failed to create assignment", error)
       }
@@ -546,6 +546,10 @@ export default function AssignmentForm() {
         <div className="flex items-center justify-between">
 
           <button
+            onClick={() =>
+              window.location.href = "/"
+            }
+
             className="
               h-[46px]
               px-6
