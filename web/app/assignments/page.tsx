@@ -1,14 +1,21 @@
 "use client"
 
 import { Filter, MoreVertical, Plus, Search } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useState} from "react"
 import { api } from "@/lib/api"
-import { Assignment } from "@/types/assignment"
+import { useAssignmentStore } from "@/store/assignment.store"
 
 export default function AssignmentsPage() {
-  const [assignments, setAssignments] = useState<Assignment[]>([])
-  const [loading, setLoading] = useState(true)
-  const [openMenu, setOpenMenu] =  useState<string | null>(null)
+  const {
+    assignments,
+    loading,
+    setAssignments,
+    setLoading,
+    removeAssignment,
+  } = useAssignmentStore()
+
+  const [openMenu, setOpenMenu] =
+    useState<string | null>(null)
 
   useEffect(() => {
     fetchAssignments()
@@ -17,6 +24,8 @@ export default function AssignmentsPage() {
   const fetchAssignments =
     async () => {
       try {
+        setLoading(true)
+
         const res =
           await api.get("/assignments")
 
@@ -28,6 +37,22 @@ export default function AssignmentsPage() {
         )
       } finally {
         setLoading(false)
+      }
+    }
+
+  const deleteAssignment =
+    async (id: string) => {
+      try {
+        await api.delete(
+          `/assignments/${id}`
+        )
+
+        removeAssignment(id)
+      } catch (error) {
+        console.error(
+          "Delete failed:",
+          error
+        )
       }
     }
 
@@ -313,7 +338,21 @@ export default function AssignmentsPage() {
                   "
                 />
 
-                {/* Decorations */}
+                {/* Cloud */}
+                <div
+                  className="
+                    absolute
+                    right-0
+                    top-[45px]
+                    h-[40px]
+                    w-[70px]
+                    rounded-full
+                    bg-white
+                    shadow-[6px_4px_13px_rgba(27,119,139,0.09)]
+                  "
+                />
+
+                {/* Doodles */}
                 <div
                   className="
                     absolute
@@ -355,7 +394,7 @@ export default function AssignmentsPage() {
                 />
               </div>
 
-              {/* Content */}
+              {/* Text */}
               <div className="space-y-2">
                 
                 <h2
@@ -559,6 +598,11 @@ export default function AssignmentsPage() {
                       </button>
 
                       <button
+                        onClick={() =>
+                          deleteAssignment(
+                            item._id
+                          )
+                        }
                         className="
                           mt-1
                           flex

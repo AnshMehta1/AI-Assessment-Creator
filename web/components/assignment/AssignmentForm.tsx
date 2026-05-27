@@ -1,24 +1,10 @@
 "use client"
 
-import { useState } from "react"
-
-import {
-  Calendar,
-  Plus,
-  ArrowLeft,
-  ArrowRight
-} from "lucide-react"
-
+import { Calendar, Plus, ArrowLeft, ArrowRight } from "lucide-react"
 import UploadBox from "./UploadBox"
 import QuestionRow from "./QuestionRow"
 import CounterInput from "./CounterInput"
-
-type Question = {
-  id: string
-  type: string
-  count: number
-  marks: number
-}
+import { useCreateAssignmentStore } from "@/store/create-assignment.store"
 
 const QUESTION_TYPES = [
   "Multiple Choice Questions",
@@ -30,44 +16,28 @@ const QUESTION_TYPES = [
 ]
 
 export default function AssignmentForm() {
-  const [file, setFile] =
-    useState<File | null>(null)
 
-  const [questions, setQuestions] =
-    useState<Question[]>([
-      {
-        id: crypto.randomUUID(),
-        type: "Multiple Choice Questions",
-        count: 4,
-        marks: 1
-      },
+  const {
+    file,
+    setFile,
 
-      {
-        id: crypto.randomUUID(),
-        type: "Short Questions",
-        count: 3,
-        marks: 2
-      },
+    title,
+    setTitle,
 
-      {
-        id: crypto.randomUUID(),
-        type:
-          "Diagram/Graph-Based Questions",
-        count: 5,
-        marks: 5
-      },
+    dueDate,
+    setDueDate,
 
-      {
-        id: crypto.randomUUID(),
-        type: "Numerical Problems",
-        count: 5,
-        marks: 5
-      }
-    ])
+    instructions,
+    setInstructions,
+
+    questions,
+    setQuestions,
+  } = useCreateAssignmentStore()
 
   const addQuestionType = () => {
-    setQuestions(prev => [
-      ...prev,
+    setQuestions([
+      ...questions,
+
       {
         id: crypto.randomUUID(),
         type: "New Question Type",
@@ -80,41 +50,49 @@ export default function AssignmentForm() {
   const removeQuestion = (
     id: string
   ) => {
-    setQuestions(prev =>
-      prev.filter(q => q.id !== id)
+    setQuestions(
+      questions.filter(
+        q => q.id !== id
+      )
     )
   }
 
   const updateQuestionType = (
-  id: string,
-  value: string
-) => {
-  setQuestions(prev =>
-    prev.map(q => {
-      if (q.id !== id) return q
-
-      return {
-        ...q,
-        type: value
-      }
-    })
-  )
-}
-
-  const updateCount = (
     id: string,
-    direction: "increment" | "decrement"
+    value: string
   ) => {
-    setQuestions(prev =>
-      prev.map(q => {
+    setQuestions(
+      questions.map(q => {
         if (q.id !== id) return q
 
         return {
           ...q,
+          type: value
+        }
+      })
+    )
+  }
+
+  const updateCount = (
+    id: string,
+    direction:
+      | "increment"
+      | "decrement"
+  ) => {
+    setQuestions(
+      questions.map(q => {
+        if (q.id !== id) return q
+
+        return {
+          ...q,
+
           count:
             direction === "increment"
               ? q.count + 1
-              : Math.max(0, q.count - 1)
+              : Math.max(
+                  0,
+                  q.count - 1
+                )
         }
       })
     )
@@ -122,18 +100,24 @@ export default function AssignmentForm() {
 
   const updateMarks = (
     id: string,
-    direction: "increment" | "decrement"
+    direction:
+      | "increment"
+      | "decrement"
   ) => {
-    setQuestions(prev =>
-      prev.map(q => {
+    setQuestions(
+      questions.map(q => {
         if (q.id !== id) return q
 
         return {
           ...q,
+
           marks:
             direction === "increment"
               ? q.marks + 1
-              : Math.max(0, q.marks - 1)
+              : Math.max(
+                  0,
+                  q.marks - 1
+                )
         }
       })
     )
@@ -210,6 +194,34 @@ export default function AssignmentForm() {
           </p>
         </div>
 
+        {/* Assignment Title */}
+        <div className="space-y-2">
+
+          <label className="font-bold text-[16px]">
+            Assignment Title
+          </label>
+
+          <input
+            value={title}
+            onChange={e =>
+              setTitle(
+                e.target.value
+              )
+            }
+            placeholder="Enter assignment title"
+            className="
+              w-full
+              h-[52px]
+              rounded-full
+              border
+              border-[#DADADA]
+              bg-white
+              px-5
+              outline-none
+            "
+          />
+        </div>
+
         {/* Upload */}
         <UploadBox
           file={file}
@@ -219,15 +231,24 @@ export default function AssignmentForm() {
         {/* Due Date */}
         <div className="space-y-2">
         
-        <label className="font-bold text-[16px]">
+          <label className="font-bold text-[16px]">
             Due Date
-        </label>
+          </label>
 
-        <div className="relative">
-            
+          <div className="relative">
+              
             <input
-            type="date"
-            className="
+              type="date"
+
+              value={dueDate}
+
+              onChange={e =>
+                setDueDate(
+                  e.target.value
+                )
+              }
+
+              className="
                 w-full
                 h-[44px]
                 border
@@ -239,21 +260,21 @@ export default function AssignmentForm() {
                 outline-none
                 text-[14px]
                 text-[#303030]
-            "
+              "
             />
 
             <Calendar
-            size={18}
-            className="
+              size={18}
+              className="
                 absolute
                 right-4
                 top-1/2
                 -translate-y-1/2
                 text-black/60
                 pointer-events-none
-            "
+              "
             />
-        </div>
+          </div>
         </div>
 
         {/* Questions */}
@@ -297,15 +318,20 @@ export default function AssignmentForm() {
               {/* Question Type */}
               <QuestionRow
                 title={question.type}
+
                 options={QUESTION_TYPES}
+
                 onChange={value =>
-                    updateQuestionType(
+                  updateQuestionType(
                     question.id,
                     value
-                    )
+                  )
                 }
+
                 onRemove={() =>
-                    removeQuestion(question.id)
+                  removeQuestion(
+                    question.id
+                  )
                 }
               />
 
@@ -313,12 +339,14 @@ export default function AssignmentForm() {
               <div className="flex justify-center">
                 <CounterInput
                   value={question.count}
+
                   onIncrement={() =>
                     updateCount(
                       question.id,
                       "increment"
                     )
                   }
+
                   onDecrement={() =>
                     updateCount(
                       question.id,
@@ -332,12 +360,14 @@ export default function AssignmentForm() {
               <div className="flex justify-center">
                 <CounterInput
                   value={question.marks}
+
                   onIncrement={() =>
                     updateMarks(
                       question.id,
                       "increment"
                     )
                   }
+
                   onDecrement={() =>
                     updateMarks(
                       question.id,
@@ -352,7 +382,9 @@ export default function AssignmentForm() {
           {/* Add Question */}
           <button
             type="button"
+
             onClick={addQuestionType}
+
             className="
               flex
               items-center
@@ -388,6 +420,7 @@ export default function AssignmentForm() {
         <div className="flex justify-end">
           
           <div className="text-right space-y-1">
+
             <p className="text-sm">
               Total Questions:
               {" "}
@@ -399,6 +432,7 @@ export default function AssignmentForm() {
               {" "}
               {totalMarks}
             </p>
+
           </div>
         </div>
 
@@ -410,6 +444,15 @@ export default function AssignmentForm() {
           </label>
 
           <textarea
+
+            value={instructions}
+
+            onChange={e =>
+              setInstructions(
+                e.target.value
+              )
+            }
+
             className="
               w-full
               h-[102px]
@@ -422,7 +465,10 @@ export default function AssignmentForm() {
               resize-none
               outline-none
             "
-            placeholder="e.g Generate a question paper for 3 hour exam duration..."
+
+            placeholder="
+              e.g Generate a question paper for 3 hour exam duration...
+            "
           />
         </div>
 
