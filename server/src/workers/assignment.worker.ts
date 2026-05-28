@@ -1,5 +1,7 @@
 import { Worker } from "bullmq"
+
 import mongoose from "mongoose"
+
 import IORedis from "ioredis"
 
 import Assignment from "../models/assignment.model"
@@ -18,24 +20,6 @@ process.on(
   console.error
 )
 
-mongoose.connect(
-  process.env.MONGODB_URI!
-)
-.then(() => {
-
-  console.log(
-    "Worker MongoDB Connected"
-  )
-
-})
-.catch(error => {
-
-  console.error(
-    "Worker MongoDB Error:",
-    error
-  )
-})
-
 const connection =
   new IORedis(
     process.env.REDIS_URL!,
@@ -45,240 +29,221 @@ const connection =
     }
   )
 
-const workerConnection =
-  connection.duplicate()
+async function startWorker() {
 
-const worker =
-  new Worker(
-    "assignment-generation",
+  try {
 
-    async job => {
+    await mongoose.connect(
+      process.env.MONGODB_URI!
+    )
 
-      console.log(
-        "Worker received job:",
-        job.id
-      )
+    console.log(
+      "Worker MongoDB Connected"
+    )
 
-      const {
-        assignmentId
-      } = job.data
+    const worker =
+      new Worker(
+        "assignment-generation",
 
-      try {
+        async job => {
 
-        await Assignment.findByIdAndUpdate(
-          assignmentId,
+          console.log(
+            "Worker received job:",
+            job.id
+          )
 
-          {
-            status:
-              "processing",
-
-            generationLogs: [
-              "Assignment created",
-              "Processing uploaded files...",
-            ],
-          }
-        )
-
-        await delay(1500)
-
-        const assignment =
-          await Assignment.findById(
+          const {
             assignmentId
-          )
-
-        if (!assignment) {
-
-          throw new Error(
-            "Assignment not found"
-          )
-        }
-
-        let extractedMaterial = ""
-
-        if (
-          assignment.fileUrl
-        ) {
-
-          await Assignment.findByIdAndUpdate(
-            assignmentId,
-
-            {
-              generationLogs: [
-                "Assignment created",
-                "Processing uploaded files...",
-                "Extracting study material...",
-              ],
-            }
-          )
+          } = job.data
 
           try {
 
-            extractedMaterial =
-              await extractTextFromFile(
-                assignment.fileUrl
+            await Assignment.findByIdAndUpdate(
+              assignmentId,
+
+              {
+                status:
+                  "processing",
+
+                generationLogs: [
+                  "Assignment created",
+                  "Processing uploaded files...",
+                ],
+              }
+            )
+
+            await delay(1500)
+
+            const assignment =
+              await Assignment.findById(
+                assignmentId
               )
 
-            console.log(
-              "Extracted Material:",
-              extractedMaterial.slice(
-                0,
-                1000
+            if (!assignment) {
+
+              throw new Error(
+                "Assignment not found"
               )
+            }
+
+            let extractedMaterial = ""
+
+            if (
+              assignment.fileUrl
+            ) {
+
+              await Assignment.findByIdAndUpdate(
+                assignmentId,
+
+                {
+                  generationLogs: [
+                    "Assignment created",
+                    "Processing uploaded files...",
+                    "Extracting study material...",
+                  ],
+                }
+              )
+
+              try {
+
+                extractedMaterial =
+                  await extractTextFromFile(
+                    assignment.fileUrl
+                  )
+
+              } catch (error) {
+
+                console.error(
+                  "Text extraction failed:",
+                  error
+                )
+              }
+            }
+
+            await Assignment.findByIdAndUpdate(
+              assignmentId,
+
+              {
+                generationLogs: [
+                  "Assignment created",
+                  "Processing uploaded files...",
+                  "Extracting study material...",
+                  "Generating AI questions...",
+                ],
+              }
+            )
+
+            const generatedPaper =
+              await generateAssessment({
+                title:
+                  assignment.title,
+
+                instructions:
+                  assignment.instructions || undefined,
+
+                questions:
+                  JSON.parse(
+                    JSON.stringify(
+                      assignment.questions
+                    )
+                  ),
+
+                material:
+                  extractedMaterial.slice(
+                    0,
+                    15000
+                  ),
+              })
+
+            await Assignment.findByIdAndUpdate(
+              assignmentId,
+
+              {
+                generatedPaper,
+
+                status:
+                  "completed",
+
+                generationLogs: [
+                  "Assignment created",
+                  "Processing uploaded files...",
+                  "Extracting study material...",
+                  "Generating AI questions...",
+                  "Generation completed!",
+                ],
+              }
+            )
+
+            console.log(
+              "Assignment generation completed:",
+              assignmentId
             )
 
           } catch (error) {
 
             console.error(
-              "Text extraction failed:",
+              "AI Generation Failed:",
               error
             )
+
+            await Assignment.findByIdAndUpdate(
+              assignmentId,
+
+              {
+                status:
+                  "failed",
+
+                generationLogs: [
+                  "Assignment created",
+                  "Generation failed",
+                ],
+              }
+            )
           }
+        },
+
+        {
+          connection:
+            connection.duplicate() as any,
         }
+      )
 
-        await delay(1000)
+    worker.on(
+      "completed",
 
-        await Assignment.findByIdAndUpdate(
-          assignmentId,
-
-          {
-            generationLogs: [
-              "Assignment created",
-              "Processing uploaded files...",
-              "Extracting study material...",
-              "Generating AI questions...",
-            ],
-          }
-        )
-
-        const generatedPaper =
-          await generateAssessment({
-            title:
-              assignment.title,
-
-            instructions:
-              assignment.instructions || undefined,
-
-            questions:
-              JSON.parse(
-                JSON.stringify(
-                  assignment.questions
-                )
-              ),
-
-            material:
-              extractedMaterial.slice(
-                0,
-                15000
-              ),
-          })
-
-        await delay(1500)
-
-        await Assignment.findByIdAndUpdate(
-          assignmentId,
-
-          {
-            generationLogs: [
-              "Assignment created",
-              "Processing uploaded files...",
-              "Extracting study material...",
-              "Generating AI questions...",
-              "Formatting assessment...",
-            ],
-          }
-        )
-
-        await delay(1000)
-
-        await Assignment.findByIdAndUpdate(
-          assignmentId,
-
-          {
-            generatedPaper,
-
-            status:
-              "completed",
-
-            generationLogs: [
-              "Assignment created",
-              "Processing uploaded files...",
-              "Extracting study material...",
-              "Generating AI questions...",
-              "Formatting assessment...",
-              "Generation completed!",
-            ],
-          }
-        )
+      job => {
 
         console.log(
-          "Assignment generation completed:",
-          assignmentId
+          `Job ${job.id} completed`
         )
+      }
+    )
 
-      } catch (error) {
+    worker.on(
+      "failed",
+
+      (
+        job,
+        error
+      ) => {
 
         console.error(
-          "AI Generation Failed:",
+          `Job ${job?.id} failed:`,
           error
         )
-
-        try {
-
-          await Assignment.findByIdAndUpdate(
-            assignmentId,
-
-            {
-              status:
-                "failed",
-
-              generationLogs: [
-                "Assignment created",
-                "Generation failed",
-              ],
-            }
-          )
-
-        } catch (dbError) {
-
-          console.error(
-            "Failed to update failed status:",
-            dbError
-          )
-        }
       }
-    },
-
-    {
-      connection:
-        workerConnection as any,
-    }
-  )
-
-worker.on(
-  "completed",
-
-  job => {
-
-    console.log(
-      `Job ${job.id} completed`
     )
-  }
-)
 
-worker.on(
-  "failed",
-
-  (
-    job,
-    error
-  ) => {
+  } catch (error) {
 
     console.error(
-      `Job ${job?.id} failed:`,
+      "Worker startup failed:",
       error
     )
   }
-)
+}
+
+startWorker()
 
 function delay(ms: number) {
 
