@@ -202,6 +202,8 @@ new Worker(
         process.env.REDIS_PORT
       ),
 
+      username: "default",
+
       password:
         process.env.REDIS_PASSWORD,
 
