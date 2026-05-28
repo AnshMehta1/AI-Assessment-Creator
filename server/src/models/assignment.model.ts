@@ -61,6 +61,9 @@ const assignmentSchema =
       fileUrl: {
         type: String,
       },
+      filePath: {
+        type: String,
+      },
       questions: [
         questionSchema
       ],

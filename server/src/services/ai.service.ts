@@ -50,6 +50,16 @@ ${JSON.stringify(
 REFERENCE MATERIAL:
 ${input.material || "None"}
 
+IMPORTANT:
+
+If reference material is provided:
+- Generate questions STRICTLY from the uploaded material
+- Prioritize concepts, definitions, examples, and explanations from the material
+- Avoid unrelated topics
+
+If reference material is NOT provided:
+- Generate high-quality educational questions based on the assignment title and instructions
+
 STRICT RULES:
 - Generate sections like Section A, Section B, etc.
 - Questions should be educational and properly formatted

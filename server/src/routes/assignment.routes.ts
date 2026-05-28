@@ -61,6 +61,11 @@ router.post(
 
           fileUrl:
             req.file
+              ? req.file.filename
+              : null,
+
+          filePath:
+            req.file
               ? req.file.path
               : null,
 
