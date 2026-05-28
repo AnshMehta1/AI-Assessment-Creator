@@ -1,4 +1,6 @@
 import { io } from "socket.io-client"
 
 export const socket =
-  io("http://localhost:5000")
+  io(
+    process.env.NEXT_PUBLIC_API_URL!
+  )
