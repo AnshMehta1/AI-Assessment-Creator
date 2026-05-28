@@ -34,7 +34,7 @@ async function startWorker() {
   try {
 
     await mongoose.connect(
-      process.env.MONGODB_URI!
+      process.env.MONGO_URI!
     )
 
     console.log(
