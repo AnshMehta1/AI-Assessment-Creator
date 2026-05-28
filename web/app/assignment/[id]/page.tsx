@@ -1,20 +1,20 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Download } from "lucide-react"
+import jsPDF from "jspdf"
+import html2canvas from "html2canvas"
 import { api } from "@/lib/api"
-import type { Assignment } from "@/store/create-assignment.store"
+import type { Assignment, GeneratedQuestion } from "@/store/create-assignment.store"
 
 export default function AssignmentPage() {
 
-  const params =
-    useParams()
+  const params = useParams()
+  const router = useRouter()
 
   const [assignment, setAssignment] =
-    useState<Assignment | null>(
-      null
-    )
+    useState<Assignment | null>(null)
 
   const [loading, setLoading] =
     useState(true)
@@ -31,9 +31,7 @@ export default function AssignmentPage() {
               `/assignments/${params.id}`
             )
 
-          setAssignment(
-            res.data
-          )
+          setAssignment(res.data)
 
         } catch (error) {
 
@@ -49,6 +47,54 @@ export default function AssignmentPage() {
 
   }, [params.id])
 
+  const downloadPDF =
+    async () => {
+
+      const input =
+        document.getElementById(
+          "paper"
+        )
+
+      if (!input) return
+
+      const canvas =
+        await html2canvas(input, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#5E5E5E",
+        })
+
+      const imgData =
+        canvas.toDataURL("image/png")
+
+      const pdf =
+        new jsPDF({
+          orientation: "portrait",
+          unit: "px",
+          format: "a4",
+        })
+
+      const pdfWidth =
+        pdf.internal.pageSize.getWidth()
+
+      const pdfHeight =
+        (canvas.height * pdfWidth) /
+        canvas.width
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        0,
+        0,
+        pdfWidth,
+        pdfHeight
+      )
+
+      pdf.save(
+        `${assignment?.title}.pdf`
+      )
+    }
+
   if (loading) {
 
     return (
@@ -58,7 +104,6 @@ export default function AssignmentPage() {
           min-h-screen
           items-center
           justify-center
-          bg-[#F5F5F5]
         "
       >
         Loading...
@@ -66,7 +111,10 @@ export default function AssignmentPage() {
     )
   }
 
-  if (!assignment) {
+  if (
+    !assignment ||
+    !assignment.generatedPaper
+  ) {
 
     return (
       <div
@@ -75,27 +123,9 @@ export default function AssignmentPage() {
           min-h-screen
           items-center
           justify-center
-          bg-[#F5F5F5]
         "
       >
-        Assignment not found
-      </div>
-    )
-  }
-
-  if (!assignment.generatedPaper) {
-
-    return (
-      <div
-        className="
-          flex
-          min-h-screen
-          items-center
-          justify-center
-          bg-[#F5F5F5]
-        "
-      >
-        No generated paper found
+        No paper found
       </div>
     )
   }
@@ -103,13 +133,61 @@ export default function AssignmentPage() {
   const paper =
     assignment.generatedPaper
 
+  const allQuestions =
+    paper.sections.flatMap(
+      section =>
+        section.questions
+    )
+  
+  const totalMarks =
+    allQuestions.reduce(
+      (sum, question) =>
+        sum + question.marks,
+      0
+    )
+
+  const rawEstimatedTime =
+    allQuestions.reduce(
+      (total, question) => {
+
+        const difficulty =
+          question.difficulty?.toLowerCase()
+
+        if (
+          difficulty === "easy"
+        ) {
+          return total + 2
+        }
+
+        if (
+          difficulty === "medium"
+        ) {
+          return total + 5
+        }
+
+        if (
+          difficulty === "hard"
+        ) {
+          return total + 10
+        }
+
+        return total + 3
+      },
+
+      0
+    )
+
+  const estimatedTime =
+    Math.round(
+      rawEstimatedTime / 5
+    ) * 5
+
   return (
     <main
       className="
         min-h-screen
-        bg-[#F5F5F5]
-        px-6
-        py-8
+        bg-[#EAEAEA]
+        py-10
       "
     >
 
@@ -117,8 +195,7 @@ export default function AssignmentPage() {
         className="
           mx-auto
           flex
-          w-full
-          max-w-[1100px]
+          w-[1100px]
           flex-col
           gap-3
           rounded-[32px]
@@ -127,15 +204,14 @@ export default function AssignmentPage() {
         "
       >
 
-        {/* TOP BANNER */}
+        {/* TOP HEADER */}
         <div
           className="
             flex
             flex-col
-            items-start
             gap-6
             rounded-[32px]
-            bg-[rgba(24,24,24,0.8)]
+            bg-[#181818CC]
             px-8
             py-6
           "
@@ -143,7 +219,6 @@ export default function AssignmentPage() {
 
           <p
             className="
-              max-w-[950px]
               text-[20px]
               font-bold
               leading-[140%]
@@ -151,60 +226,95 @@ export default function AssignmentPage() {
               text-white
             "
           >
-            Certainly!
-            Here is the customized
-            Question Paper.
+            Certainly! Here is the
+            customized Question Paper.
           </p>
 
-          <button
-            onClick={() =>
-              window.print()
-            }
-
+          <div
             className="
               flex
-              h-[44px]
               items-center
-              justify-center
-              gap-2
-              rounded-full
-              bg-white
-              px-6
-              text-[#303030]
-              transition-all
-              duration-200
-              hover:scale-[1.02]
+              gap-4
             "
           >
 
-            <Download size={18} />
+            {/* BACK BUTTON */}
+            <button
+              onClick={() =>
+                router.push("/")
+              }
 
-            <span
               className="
+                flex
+                h-[44px]
+                items-center
+                justify-center
+                rounded-full
+                bg-white
+                px-5
                 text-[16px]
                 font-medium
                 tracking-[-0.04em]
+                text-[#303030]
+                shadow-sm
+                transition-all
+                duration-200
+                hover:scale-[1.02]
               "
             >
+              ← Assignments
+            </button>
+
+            {/* DOWNLOAD BUTTON */}
+            <button
+              onClick={downloadPDF}
+
+              className="
+                flex
+                h-[44px]
+                items-center
+                justify-center
+                gap-2
+                rounded-full
+                bg-white
+                px-6
+                text-[16px]
+                font-medium
+                tracking-[-0.04em]
+                text-[#303030]
+                shadow-sm
+                transition-all
+                duration-200
+                hover:scale-[1.02]
+              "
+            >
+
+              <Download
+                size={16}
+              />
+
               Download as PDF
-            </span>
-          </button>
+            </button>
+          </div>
         </div>
 
         {/* PAPER */}
         <div
+          id="paper"
+
           className="
             flex
             flex-col
             items-center
+            gap-6
             rounded-[32px]
             bg-white
-            px-[32px]
-            py-[32px]
+            px-8
+            py-8
           "
         >
 
-          {/* HEADER */}
+          {/* SCHOOL HEADER */}
           <div
             className="
               w-full
@@ -227,7 +337,7 @@ export default function AssignmentPage() {
 
             <p
               className="
-                text-[24px]
+                text-[20px]
                 font-semibold
                 leading-[160%]
                 tracking-[-0.04em]
@@ -241,7 +351,7 @@ export default function AssignmentPage() {
 
             <p
               className="
-                text-[24px]
+                text-[20px]
                 font-semibold
                 leading-[160%]
                 tracking-[-0.04em]
@@ -255,10 +365,8 @@ export default function AssignmentPage() {
           {/* META */}
           <div
             className="
-              mt-[24px]
               flex
               w-full
-              items-center
               justify-between
             "
           >
@@ -267,26 +375,34 @@ export default function AssignmentPage() {
               className="
                 text-[18px]
                 font-semibold
+                leading-[160%]
+                tracking-[-0.04em]
+                text-[#303030]
               "
             >
               Time Allowed:
-              45 minutes
+              {" "}
+              {estimatedTime} minutes
             </p>
 
             <p
               className="
                 text-[18px]
                 font-semibold
+                leading-[160%]
+                tracking-[-0.04em]
+                text-[#303030]
               "
             >
-              Maximum Marks: 20
+              Maximum Marks:
+              {" "}
+              {totalMarks}
             </p>
           </div>
 
-          {/* INSTRUCTIONS */}
+          {/* GENERAL */}
           <div
             className="
-              mt-[24px]
               w-full
             "
           >
@@ -295,22 +411,22 @@ export default function AssignmentPage() {
               className="
                 text-[18px]
                 font-semibold
+                leading-[160%]
+                tracking-[-0.04em]
+                text-[#303030]
               "
             >
-              All questions are
-              compulsory unless
-              stated otherwise.
+              All questions are compulsory
+              unless stated otherwise.
             </p>
           </div>
 
           {/* STUDENT INFO */}
           <div
             className="
-              mt-[24px]
               flex
               w-full
               flex-col
-              gap-1
             "
           >
 
@@ -318,6 +434,7 @@ export default function AssignmentPage() {
               className="
                 text-[18px]
                 font-semibold
+                leading-[160%]
               "
             >
               Name:
@@ -328,6 +445,7 @@ export default function AssignmentPage() {
               className="
                 text-[18px]
                 font-semibold
+                leading-[160%]
               "
             >
               Roll Number:
@@ -338,98 +456,97 @@ export default function AssignmentPage() {
               className="
                 text-[18px]
                 font-semibold
+                leading-[160%]
               "
             >
-              Class:
-              5th
+              Class: 5th
+              {" "}
               Section:
-              ____________
+              {" "}
+              __________
             </p>
           </div>
 
           {/* SECTIONS */}
-          <div
-            className="
-              mt-[48px]
-              flex
-              w-full
-              flex-col
-              gap-[48px]
-            "
-          >
+          {paper.sections.map(
+            (
+              section,
+              sectionIndex
+            ) => (
 
-            {paper.sections.map(
-              (
-                section,
-                sectionIndex
-              ) => (
+              <div
+                key={sectionIndex}
 
+                className="
+                  mt-6
+                  flex
+                  w-full
+                  flex-col
+                  gap-6
+                "
+              >
+
+                {/* SECTION TITLE */}
                 <div
-                  key={sectionIndex}
                   className="
-                    w-full
+                    flex
+                    justify-center
                   "
                 >
 
-                  {/* SECTION TITLE */}
-                  <div
+                  <h2
                     className="
-                      flex
-                      justify-center
+                      text-[24px]
+                      font-semibold
+                      leading-[160%]
+                      tracking-[-0.04em]
+                      text-[#303030]
                     "
                   >
+                    {section.title}
+                  </h2>
+                </div>
 
-                    <h2
-                      className="
-                        text-[24px]
-                        font-semibold
-                        leading-[160%]
-                        tracking-[-0.04em]
-                        text-[#303030]
-                      "
-                    >
-                      {section.title}
-                    </h2>
-                  </div>
+                {/* INSTRUCTION */}
+                <div>
 
-                  {/* SECTION INSTRUCTION */}
-                  <div
+                  <p
                     className="
-                      mt-[32px]
+                      text-[18px]
+                      font-semibold
+                      italic
+                      leading-[160%]
+                      tracking-[-0.04em]
+                      text-[#303030]
                     "
                   >
-                    <p
-                      className="
-                        text-[14px]
-                        italic
-                        text-[#6B6B6B]
-                      "
-                    >
-                      {
-                        section.instruction
-                      }
-                    </p>
-                  </div>
+                    {
+                      section.instruction
+                    }
+                  </p>
+                </div>
 
-                  {/* QUESTIONS */}
-                  <div
-                    className="
-                      mt-[24px]
-                      flex
-                      flex-col
-                      gap-[16px]
-                    "
-                  >
+                {/* QUESTIONS */}
+                <div
+                  className="
+                    flex
+                    flex-col
+                    gap-8
+                  "
+                >
 
-                    {section.questions.map(
-                      (
-                        question,
-                        questionIndex
-                      ) => (
+                  {section.questions.map(
+                    (
+                      question:
+                        GeneratedQuestion,
+                      questionIndex
+                    ) => (
 
-                        <div
-                          key={questionIndex}
+                      <div
+                        key={questionIndex}
+                      >
 
+                        <p
                           className="
                             text-[16px]
                             leading-[240%]
@@ -438,95 +555,117 @@ export default function AssignmentPage() {
                           "
                         >
 
-                          {/* QUESTION */}
-                          <p>
+                          <span
+                            className="
+                              font-semibold
+                            "
+                          >
+                            {
+                              questionIndex + 1
+                            }.
+                          </span>
 
-                            {questionIndex + 1}.
-                            {" "}
+                          {" "}
 
-                            <span
-                              className="
-                                font-medium
-                              "
-                            >
-                              [
-                              {String(
-                                question.difficulty
-                              )}
-                              ]
-                            </span>
+                          [
+                          {
+                            question.difficulty
+                          }
+                          ]
 
-                            {" "}
+                          {" "}
 
-                            {String(
-                              question.question
-                            )}
+                          {
+                            question.question
+                          }
 
-                            {" "}
+                          {" "}
 
-                            [
-                            {String(
-                              question.marks
-                            )}
-                            {" "}
-                            Marks
-                            ]
+                          [
+                          {
+                            question.marks
+                          }
+                          {" "}
+                          Marks ]
+                        </p>
 
-                          </p>
+                        {/* OPTIONS */}
+                        {question.options &&
+                          question.options.length > 0 && (
 
-                          {/* MCQ OPTIONS */}
-                          {Array.isArray(
-                            question.options
-                          ) && (
-                            <div
-                              className="
-                                ml-[28px]
-                                mt-[10px]
-                                flex
-                                flex-col
-                                gap-[6px]
-                              "
-                            >
+                          <div
+                            className="
+                              mt-3
+                              ml-6
+                              flex
+                              flex-col
+                              gap-2
+                            "
+                          >
 
-                              {question.options.map(
-                                (
-                                  option,
-                                  optionIndex
-                                ) => (
+                            {question.options.map(
+                              (
+                                option,
+                                optionIndex
+                              ) => (
 
-                                  <p
-                                    key={optionIndex}
+                                <div
+                                  key={optionIndex}
+
+                                  className="
+                                    flex
+                                    gap-3
+                                  "
+                                >
+
+                                  <span
                                     className="
                                       text-[15px]
-                                      text-[#4B4B4B]
+                                      leading-[240%]
                                     "
                                   >
-                                    {String(option)}
+                                    {
+                                      String.fromCharCode(
+                                        65 +
+                                        optionIndex
+                                      )
+                                    }.
+                                  </span>
+
+                                  <p
+                                    className="
+                                      text-[15px]
+                                      leading-[240%]
+                                      tracking-[-0.04em]
+                                      text-[#303030]
+                                    "
+                                  >
+                                    {option}
                                   </p>
-                                )
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )
-                    )}
-                  </div>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  )}
                 </div>
-              )
-            )}
-          </div>
+              </div>
+            )
+          )}
 
           {/* END */}
           <div
             className="
-              mt-[32px]
+              mt-4
               w-full
             "
           >
 
             <p
               className="
-                text-[18px]
+                text-[24px]
                 font-bold
                 text-[#303030]
               "
@@ -538,8 +677,11 @@ export default function AssignmentPage() {
           {/* ANSWER KEY */}
           <div
             className="
-              mt-[48px]
+              mt-8
+              flex
               w-full
+              flex-col
+              gap-4
             "
           >
 
@@ -547,62 +689,49 @@ export default function AssignmentPage() {
               className="
                 text-[24px]
                 font-bold
-                leading-[160%]
-                tracking-[-0.04em]
                 text-[#303030]
               "
             >
               Answer Key:
             </h2>
 
-            <div
-              className="
-                mt-[24px]
-                flex
-                flex-col
-                gap-[12px]
-              "
-            >
+            {allQuestions.map(
+              (
+                question:
+                  GeneratedQuestion,
+                index
+              ) => (
 
-              {paper.sections
-                .flatMap(
-                  section =>
-                    section.questions
-                )
-                .map(
-                  (
-                    question,
-                    index
-                  ) => (
+                <div
+                  key={index}
+                >
 
-                    <div
-                      key={index}
+                  <p
+                    className="
+                      text-[16px]
+                      leading-[240%]
+                      tracking-[-0.04em]
+                      text-[#303030]
+                    "
+                  >
 
+                    <span
                       className="
-                        text-[16px]
-                        leading-[200%]
-                        tracking-[-0.04em]
-                        text-[#303030]
+                        font-semibold
                       "
                     >
+                      {index + 1}.
+                    </span>
 
-                      <span
-                        className="
-                          font-semibold
-                        "
-                      >
-                        {index + 1}.
-                      </span>
+                    {" "}
 
-                      {" "}
-
-                      {typeof question.answer === "string"
-                        ? question.answer
-                        : "Answer unavailable"}
-                    </div>
-                  )
-                )}
-            </div>
+                    {
+                      question.answer
+                    }
+                  </p>
+                </div>
+              )
+            )}
           </div>
         </div>
       </div>
