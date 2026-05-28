@@ -1,7 +1,7 @@
 "use client"
 
 import { Filter, MoreVertical, Plus, Search } from "lucide-react"
-import { useEffect, useState} from "react"
+import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { useAssignmentStore } from "@/store/assignment.store"
@@ -20,6 +20,15 @@ export default function AssignmentsPage() {
   const [openMenu, setOpenMenu] =
     useState<string | null>(null)
 
+  const [selectedFilter, setSelectedFilter] =
+    useState("all")
+
+  const [showFilters, setShowFilters] =
+    useState(false)
+
+  const [searchQuery, setSearchQuery] =
+    useState("")
+
   useEffect(() => {
     fetchAssignments()
   }, [])
@@ -30,28 +39,42 @@ export default function AssignmentsPage() {
         setLoading(true)
 
         const res =
-          await api.get("/assignments")
+          await api.get(
+            "/assignments"
+          )
 
-        setAssignments(res.data)
+        setAssignments(
+          res.data
+        )
+
       } catch (error) {
+
         console.error(
           "Error fetching assignments:",
           error
         )
+
       } finally {
+
         setLoading(false)
       }
     }
 
   const deleteAssignment =
-    async (id: string) => {
+    async (
+      id: string
+    ) => {
+
       try {
+
         await api.delete(
           `/assignments/${id}`
         )
 
         removeAssignment(id)
+
       } catch (error) {
+
         console.error(
           "Delete failed:",
           error
@@ -59,17 +82,102 @@ export default function AssignmentsPage() {
       }
     }
 
+  const filteredAssignments =
+    assignments.filter(
+      assignment => {
+
+        const today =
+          new Date()
+
+        const dueDate =
+          new Date(
+            assignment.dueDate
+          )
+
+        const matchesSearch =
+          assignment.title
+            .toLowerCase()
+            .includes(
+              searchQuery.toLowerCase()
+            )
+
+        if (!matchesSearch) {
+          return false
+        }
+
+        if (
+          selectedFilter ===
+          "all"
+        ) {
+          return true
+        }
+
+        if (
+          selectedFilter ===
+          "upcoming"
+        ) {
+          return dueDate >= today
+        }
+
+        if (
+          selectedFilter ===
+          "overdue"
+        ) {
+          return dueDate < today
+        }
+
+        if (
+          selectedFilter ===
+          "generated"
+        ) {
+          return Boolean(
+            assignment.generatedPaper
+          )
+        }
+
+        if (
+          selectedFilter ===
+          "recent"
+        ) {
+          return true
+        }
+
+        return true
+      }
+    )
+
   const isEmpty =
-    assignments.length === 0
+    filteredAssignments.length === 0
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] px-6 py-8 pb-40">
-      
-      <div className="mx-auto max-w-[1100px] space-y-5">
-        
+    <main
+      className="
+        min-h-screen
+        bg-[#F5F5F5]
+        px-6
+        py-8
+        pb-40
+      "
+    >
+
+      <div
+        className="
+          mx-auto
+          max-w-[1100px]
+          space-y-5
+        "
+      >
+
         {/* Header */}
-        <div className="flex items-center gap-3 px-2">
-          
+        <div
+          className="
+            flex
+            items-center
+            gap-3
+            px-2
+          "
+        >
+
           <div
             className="
               h-3
@@ -122,22 +230,180 @@ export default function AssignmentsPage() {
             md:justify-between
           "
         >
-          
+
           {/* Filter */}
-          <button
+          <div
             className="
+              relative
               flex
               items-center
-              gap-2
-              text-[14px]
-              font-bold
-              tracking-[-0.04em]
-              text-[#A9A9A9]
             "
           >
-            <Filter size={18} />
-            Filter By
-          </button>
+
+            {/* Filter Button */}
+            <button
+              onClick={() =>
+                setShowFilters(
+                  !showFilters
+                )
+              }
+
+              className="
+                flex
+                h-[56px]
+                items-center
+                rounded-[20px]
+                gap-4
+                bg-white
+                px-[22px]
+                shadow-[0px_8px_24px_rgba(0,0,0,0.04)]
+                transition-all
+                duration-200
+                hover:shadow-[0px_10px_28px_rgba(0,0,0,0.06)]
+              "
+            >
+
+              <Filter
+                size={22}
+                strokeWidth={2.2}
+
+                className="
+                  text-[#A9A9A9]
+                "
+              />
+
+              <span
+                className="
+                  text-[18px]
+                  font-[700]
+                  leading-none
+                  tracking-[-0.04em]
+                  text-[#A9A9A9]
+                "
+              >
+                {selectedFilter === "all" &&
+                  "Filter By"}
+
+                {selectedFilter ===
+                  "upcoming" &&
+                  "Upcoming"}
+
+                {selectedFilter ===
+                  "overdue" &&
+                  "Overdue"}
+
+                {selectedFilter ===
+                  "generated" &&
+                  "Generated Papers"}
+
+                {selectedFilter ===
+                  "recent" &&
+                  "Recently Created"}
+              </span>
+            </button>
+
+            {/* Dropdown */}
+            {showFilters && (
+
+              <div
+                className="
+                  absolute
+                  left-0
+                  top-[52px]
+                  z-50
+                  w-[220px]
+                  rounded-[22px]
+                  border
+                  border-[#ECECEC]
+                  bg-white
+                  p-2
+                  shadow-[0px_24px_64px_rgba(0,0,0,0.12)]
+                "
+              >
+
+                {[
+                  {
+                    label:
+                      "All Assignments",
+
+                    value:
+                      "all",
+                  },
+
+                  {
+                    label:
+                      "Upcoming",
+
+                    value:
+                      "upcoming",
+                  },
+
+                  {
+                    label:
+                      "Overdue",
+
+                    value:
+                      "overdue",
+                  },
+
+                  {
+                    label:
+                      "Generated Papers",
+
+                    value:
+                      "generated",
+                  },
+
+                  {
+                    label:
+                      "Recently Created",
+
+                    value:
+                      "recent",
+                  },
+                ].map(filter => (
+
+                  <button
+                    key={filter.value}
+
+                    onClick={() => {
+
+                      setSelectedFilter(
+                        filter.value
+                      )
+
+                      setShowFilters(false)
+                    }}
+
+                    className={`
+                      flex
+                      h-[42px]
+                      w-full
+                      items-center
+                      rounded-[14px]
+                      px-4
+                      text-left
+                      text-[14px]
+                      font-medium
+                      tracking-[-0.04em]
+                      transition
+
+                      ${
+                        selectedFilter ===
+                        filter.value
+
+                          ? "bg-[#181818] text-white"
+
+                          : "text-[#303030] hover:bg-[#F6F6F6]"
+                      }
+                    `}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Search */}
           <div
@@ -155,14 +421,27 @@ export default function AssignmentsPage() {
               md:w-[380px]
             "
           >
+
             <Search
               size={18}
-              className="text-[#A9A9A9]"
+              className="
+                text-[#A9A9A9]
+              "
             />
 
             <input
               type="text"
+
+              value={searchQuery}
+
+              onChange={e =>
+                setSearchQuery(
+                  e.target.value
+                )
+              }
+
               placeholder="Search Assignment"
+
               className="
                 flex-1
                 bg-transparent
@@ -176,8 +455,9 @@ export default function AssignmentsPage() {
           </div>
         </div>
 
-        {/* Loading State */}
+        {/* Loading */}
         {loading && (
+
           <div
             className="
               flex
@@ -195,8 +475,9 @@ export default function AssignmentsPage() {
           </div>
         )}
 
-        {/* Empty State */}
+        {/* Empty */}
         {!loading && isEmpty && (
+
           <div
             className="
               flex
@@ -425,12 +706,13 @@ export default function AssignmentsPage() {
                 </p>
               </div>
 
-              {/* CTA */}
               <button
                 onClick={() =>
-                  window.location.href = "/create"
+                  router.push(
+                    "/create"
+                  )
                 }
-                
+
                 className="
                   flex
                   h-[46px]
@@ -445,7 +727,7 @@ export default function AssignmentsPage() {
                   hover:scale-[1.02]
                 "
               >
-                
+
                 <Plus size={18} />
 
                 <span
@@ -462,9 +744,10 @@ export default function AssignmentsPage() {
           </div>
         )}
 
-        {/* Assignments Grid */}
+        {/* Grid */}
         {!loading &&
           !isEmpty && (
+
             <div
               className="
                 grid
@@ -473,9 +756,12 @@ export default function AssignmentsPage() {
                 md:grid-cols-2
               "
             >
-              {assignments.map(item => (
+
+              {filteredAssignments.map(item => (
+
                 <div
                   key={item._id}
+
                   className="
                     relative
                     min-h-[180px]
@@ -488,10 +774,16 @@ export default function AssignmentsPage() {
                     hover:shadow-[0px_12px_48px_rgba(0,0,0,0.06)]
                   "
                 >
-                  
+
                   {/* Top */}
-                  <div className="flex items-start justify-between">
-                    
+                  <div
+                    className="
+                      flex
+                      items-start
+                      justify-between
+                    "
+                  >
+
                     <h2
                       className="
                         max-w-[70%]
@@ -513,6 +805,7 @@ export default function AssignmentsPage() {
                             : item._id
                         )
                       }
+
                       className="
                         rounded-full
                         p-1
@@ -520,9 +813,12 @@ export default function AssignmentsPage() {
                         hover:bg-[#F6F6F6]
                       "
                     >
+
                       <MoreVertical
                         size={20}
-                        className="text-[#A9A9A9]"
+                        className="
+                          text-[#A9A9A9]
+                        "
                       />
                     </button>
                   </div>
@@ -539,7 +835,7 @@ export default function AssignmentsPage() {
                       justify-between
                     "
                   >
-                    
+
                     <p
                       className="
                         text-[16px]
@@ -549,7 +845,14 @@ export default function AssignmentsPage() {
                       "
                     >
                       Assigned on :
-                      <span className="ml-1 font-medium text-black/55">
+
+                      <span
+                        className="
+                          ml-1
+                          font-medium
+                          text-black/55
+                        "
+                      >
                         {item.assignedOn}
                       </span>
                     </p>
@@ -563,7 +866,14 @@ export default function AssignmentsPage() {
                       "
                     >
                       Due :
-                      <span className="ml-1 font-medium text-black/55">
+
+                      <span
+                        className="
+                          ml-1
+                          font-medium
+                          text-black/55
+                        "
+                      >
                         {item.dueDate}
                       </span>
                     </p>
@@ -571,6 +881,7 @@ export default function AssignmentsPage() {
 
                   {/* Dropdown */}
                   {openMenu === item._id && (
+
                     <div
                       className="
                         absolute
@@ -584,7 +895,7 @@ export default function AssignmentsPage() {
                         shadow-[0px_24px_64px_rgba(0,0,0,0.14)]
                       "
                     >
-                      
+
                       <button
                         onClick={() =>
                           router.push(
@@ -616,6 +927,7 @@ export default function AssignmentsPage() {
                             item._id
                           )
                         }
+
                         className="
                           mt-1
                           flex
@@ -639,50 +951,55 @@ export default function AssignmentsPage() {
               ))}
             </div>
           )}
+
       </div>
 
-      {/* Floating Create Assignment Button */}
-      {!loading && !isEmpty && (
-        <button
-          onClick={() =>
-            window.location.href = "/create"
-          }
+      {/* Floating Button */}
+      {!loading &&
+        !isEmpty && (
 
-          className="
-            fixed
-            bottom-8
-            left-1/2
-            z-50
-            flex
-            h-[52px]
-            -translate-x-1/2
-            items-center
-            gap-2
-            rounded-full
-            bg-[#181818]
-            px-8
-            text-white
-            shadow-[0px_10px_40px_rgba(0,0,0,0.18)]
-            transition-all
-            duration-200
-            hover:scale-[1.02]
-            hover:shadow-[0px_14px_48px_rgba(0,0,0,0.22)]
-          "
-        >
-          
-          <Plus size={18} />
+          <button
+            onClick={() =>
+              router.push(
+                "/create"
+              )
+            }
 
-          <span
             className="
-              text-[16px]
-              font-medium
-              tracking-[-0.04em]
+              fixed
+              bottom-8
+              left-1/2
+              z-50
+              flex
+              h-[52px]
+              -translate-x-1/2
+              items-center
+              gap-2
+              rounded-full
+              bg-[#181818]
+              px-8
+              text-white
+              shadow-[0px_10px_40px_rgba(0,0,0,0.18)]
+              transition-all
+              duration-200
+              hover:scale-[1.02]
+              hover:shadow-[0px_14px_48px_rgba(0,0,0,0.22)]
             "
           >
-            Create Assignment
-          </span>
-        </button>
-      )}
+
+            <Plus size={18} />
+
+            <span
+              className="
+                text-[16px]
+                font-medium
+                tracking-[-0.04em]
+              "
+            >
+              Create Assignment
+            </span>
+          </button>
+        )}
     </main>
   )
 }

@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { Assignment } from "@/types/assignment"
+import { Assignment } from "./create-assignment.store"
 
 type AssignmentStore = {
   assignments: Assignment[]
