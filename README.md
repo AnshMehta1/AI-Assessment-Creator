@@ -1,12 +1,5 @@
 # VedaAI — AI Assessment Generator
 
-## Live Demo
-
-Web Link:  
-https://ai-assessment-creator-55ti-4zqulzwiz-anshmehta1s-projects.vercel.app
-
----
-
 # Setup Instructions
 
 ## 1. Clone Repository
@@ -41,28 +34,6 @@ npm install
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000
-```
-
----
-
-## Backend (.env)
-
-```env
-PORT=5000
-
-MONGO_URI=
-
-GEMINI_API_KEY=
-
-REDIS_URL=
-
-CLIENT_URL=http://localhost:3000
-
-CLOUDINARY_CLOUD_NAME=
-
-CLOUDINARY_API_KEY=
-
-CLOUDINARY_API_SECRET=
 ```
 
 ---
