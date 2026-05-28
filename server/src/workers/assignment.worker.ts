@@ -1,8 +1,45 @@
 import { Worker } from "bullmq"
+import mongoose from "mongoose"
+import IORedis from "ioredis"
 
 import Assignment from "../models/assignment.model"
+
 import { generateAssessment } from "../services/ai.service"
+
 import { extractTextFromFile } from "../services/extract-text.service"
+
+process.on(
+  "unhandledRejection",
+  console.error
+)
+
+process.on(
+  "uncaughtException",
+  console.error
+)
+
+mongoose.connect(
+  process.env.MONGODB_URI!
+)
+.then(() => {
+
+  console.log(
+    "Worker MongoDB Connected"
+  )
+
+})
+.catch(error => {
+
+  console.error(
+    "Worker MongoDB Error:",
+    error
+  )
+})
+
+const connection =
+  new IORedis(
+    process.env.REDIS_URL!
+  )
 
 new Worker(
   "assignment-generation",
@@ -51,7 +88,7 @@ new Worker(
       let extractedMaterial = ""
 
       if (
-        assignment.filePath
+        assignment.fileUrl
       ) {
 
         await Assignment.findByIdAndUpdate(
@@ -70,7 +107,7 @@ new Worker(
 
           extractedMaterial =
             await extractTextFromFile(
-              assignment.filePath
+              assignment.fileUrl
             )
 
           console.log(
@@ -194,10 +231,7 @@ new Worker(
   },
 
   {
-    connection: {
-      url:
-        process.env.REDIS_URL,
-    },
+    connection,
   }
 )
 
