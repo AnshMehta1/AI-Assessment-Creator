@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { Suspense, useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { api } from "@/lib/api"
 
-export default function GeneratePage() {
+function GenerateContent() {
 
   const searchParams =
     useSearchParams()
@@ -20,7 +20,9 @@ export default function GeneratePage() {
 
   useEffect(() => {
 
-    if (!assignmentId) return
+    if (!assignmentId) {
+      return
+    }
 
     const interval =
       setInterval(
@@ -37,7 +39,7 @@ export default function GeneratePage() {
               res.data
 
             setLogs([
-            ...(assignment.generationLogs || [])
+              ...(assignment.generationLogs || []),
             ])
 
             if (
@@ -60,16 +62,19 @@ export default function GeneratePage() {
 
           } catch (error) {
 
-            console.error(error)
+            console.error(
+              error
+            )
           }
-
         },
 
         2000
       )
 
     return () =>
-      clearInterval(interval)
+      clearInterval(
+        interval
+      )
 
   }, [
     assignmentId,
@@ -77,17 +82,18 @@ export default function GeneratePage() {
   ])
 
   return (
+
     <main
       className="
-        min-h-screen
-        bg-[#F5F5F5]
         flex
+        min-h-screen
         items-center
         justify-center
+        bg-[#F5F5F5]
         px-6
       "
     >
-      
+
       <div
         className="
           w-full
@@ -98,7 +104,7 @@ export default function GeneratePage() {
           shadow-sm
         "
       >
-        
+
         <h1
           className="
             text-[36px]
@@ -116,11 +122,13 @@ export default function GeneratePage() {
             space-y-4
           "
         >
-          
+
           {logs.map(
             (log, index) => (
+
               <div
                 key={index}
+
                 className="
                   flex
                   h-[56px]
@@ -139,5 +147,41 @@ export default function GeneratePage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function GeneratePage() {
+
+  return (
+
+    <Suspense
+      fallback={
+
+        <main
+          className="
+            flex
+            min-h-screen
+            items-center
+            justify-center
+            bg-[#F5F5F5]
+          "
+        >
+
+          <div
+            className="
+              text-[18px]
+              font-medium
+              text-[#181818]
+            "
+          >
+            Loading...
+          </div>
+        </main>
+      }
+    >
+
+      <GenerateContent />
+
+    </Suspense>
   )
 }
