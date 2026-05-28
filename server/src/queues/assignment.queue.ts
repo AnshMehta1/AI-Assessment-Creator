@@ -6,8 +6,15 @@ export const assignmentQueue =
 
     {
       connection: {
-        host: "127.0.0.1",
-        port: 6379,
+        host:
+          process.env.REDIS_HOST,
+
+        port: Number(
+          process.env.REDIS_PORT
+        ),
+
+        password:
+          process.env.REDIS_PASSWORD,
       },
     }
   )
