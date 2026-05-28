@@ -2,11 +2,8 @@
 
 ## Live Demo
 
-Frontend:  
+Web Link:  
 https://ai-assessment-creator-55ti-4zqulzwiz-anshmehta1s-projects.vercel.app
-
-Backend API:  
-https://ai-assessment-creator-production-30db.up.railway.app
 
 ---
 
