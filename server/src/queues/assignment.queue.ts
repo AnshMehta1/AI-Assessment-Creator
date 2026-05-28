@@ -15,6 +15,8 @@ export const assignmentQueue =
 
         password:
           process.env.REDIS_PASSWORD,
+
+        tls: {},
       },
     }
   )

@@ -204,6 +204,8 @@ new Worker(
 
       password:
         process.env.REDIS_PASSWORD,
+
+      tls: {},
     },
   }
 )
