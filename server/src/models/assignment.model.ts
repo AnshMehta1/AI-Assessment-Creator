@@ -5,6 +5,14 @@ const generatedQuestionSchema =
     question: {
       type: String,
     },
+    options: [
+      {
+        type: String,
+      },
+    ],
+    answer: {
+      type: String,
+    },
     difficulty: {
       type: String,
     },
@@ -67,6 +75,12 @@ const assignmentSchema =
         default: "pending",
       },
       generatedPaper: {
+        title: {
+          type: String,
+        },
+        instructions: {
+          type: String,
+        },
         sections: [
           generatedSectionSchema
         ],
