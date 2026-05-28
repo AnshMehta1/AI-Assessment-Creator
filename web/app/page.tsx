@@ -3,6 +3,7 @@
 import { Filter, MoreVertical, Plus, Search } from "lucide-react"
 import { useEffect, useState} from "react"
 import { api } from "@/lib/api"
+import { useRouter } from "next/navigation"
 import { useAssignmentStore } from "@/store/assignment.store"
 
 export default function AssignmentsPage() {
@@ -13,6 +14,8 @@ export default function AssignmentsPage() {
     setLoading,
     removeAssignment,
   } = useAssignmentStore()
+
+  const router = useRouter()
 
   const [openMenu, setOpenMenu] =
     useState<string | null>(null)
@@ -583,6 +586,12 @@ export default function AssignmentsPage() {
                     >
                       
                       <button
+                        onClick={() =>
+                          router.push(
+                            `/assignment/${item._id}`
+                          )
+                        }
+
                         className="
                           flex
                           h-[44px]
